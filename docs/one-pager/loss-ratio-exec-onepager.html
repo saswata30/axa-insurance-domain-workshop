@@ -1,0 +1,356 @@
+<title>Governed Loss-Ratio Intelligence</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+<style>
+  :root {
+    --bg: #eaeef4;
+    --surface: #ffffff;
+    --surface-2: #f2f5fa;
+    --ink: #14202f;
+    --ink-soft: #4b5a6b;
+    --ink-faint: #7b8a9c;
+    --line: #d4dde9;
+    --line-soft: #e5ebf3;
+    --accent: #2f56c9;
+    --accent-ink: #23459f;
+    --accent-soft: #e6ecfb;
+    --dbx: #ff3621;
+    --dbx-ink: #c0261a;
+    --dbx-soft: #fdeae6;
+    --good: #148a5e;
+    --good-soft: #e2f4ec;
+    --warn: #b9760a;
+    --shadow: 0 1px 2px rgba(18,32,47,.05), 0 6px 22px rgba(18,32,47,.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b131d; --surface: #131f2d; --surface-2: #172433;
+      --ink: #e8eff7; --ink-soft: #a4b5c7; --ink-faint: #70839a;
+      --line: #29384a; --line-soft: #1f2c3c;
+      --accent: #7d93ff; --accent-ink: #9fb0ff; --accent-soft: #1a2340;
+      --dbx: #ff5a47; --dbx-ink: #ff7d6e; --dbx-soft: #351a17;
+      --good: #34c98a; --good-soft: #102a20; --warn: #e0a13a;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b131d; --surface: #131f2d; --surface-2: #172433;
+    --ink: #e8eff7; --ink-soft: #a4b5c7; --ink-faint: #70839a;
+    --line: #29384a; --line-soft: #1f2c3c;
+    --accent: #7d93ff; --accent-ink: #9fb0ff; --accent-soft: #1a2340;
+    --dbx: #ff5a47; --dbx-ink: #ff7d6e; --dbx-soft: #351a17;
+    --good: #34c98a; --good-soft: #102a20; --warn: #e0a13a;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.4);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif; line-height: 1.45;
+    -webkit-font-smoothing: antialiased; }
+  .page { max-width: 1160px; margin: 0 auto; padding: clamp(18px,3vw,34px); }
+
+  .eyebrow { font-family:"IBM Plex Mono",monospace; font-size:11.5px; font-weight:600;
+    letter-spacing:.18em; text-transform:uppercase; color:var(--accent-ink);
+    display:flex; align-items:center; gap:10px; margin:0 0 10px; }
+  .eyebrow .rule { width:26px; height:1px; background:var(--accent); opacity:.55; }
+  h1 { font-family:"Fraunces",Georgia,serif; font-weight:600; font-size:clamp(28px,4.4vw,44px);
+    line-height:1.02; letter-spacing:-.015em; margin:0 0 8px; text-wrap:balance; }
+  .lede { font-size:clamp(14px,1.5vw,16.5px); color:var(--ink-soft); max-width:64ch; margin:0; }
+  .lede b { color:var(--ink); font-weight:600; }
+
+  .head { display:grid; grid-template-columns:1.5fr 1fr; gap:22px; align-items:end;
+    padding-bottom:18px; border-bottom:1px solid var(--line); }
+
+  /* KPI strip */
+  .kpis { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .kpi { background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:11px 13px; box-shadow:var(--shadow); }
+  .kpi .v { font-family:"Fraunces",serif; font-weight:700; font-size:24px; line-height:1;
+    font-variant-numeric:tabular-nums; }
+  .kpi .v.good { color:var(--good); } .kpi .v.accent { color:var(--accent-ink); }
+  .kpi .l { font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--ink-faint);
+    text-transform:uppercase; letter-spacing:.06em; margin-top:4px; }
+
+  section { margin-top:22px; }
+  .sec-h { font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600;
+    letter-spacing:.13em; text-transform:uppercase; color:var(--ink-faint); margin:0 0 12px;
+    display:flex; align-items:center; gap:9px; }
+  .sec-h::after { content:""; flex:1; height:1px; background:var(--line); }
+
+  .two { display:grid; grid-template-columns:0.95fr 1.05fr; gap:24px; align-items:start; }
+  h2 { font-family:"Fraunces",serif; font-weight:600; font-size:20px; letter-spacing:-.01em; margin:0 0 8px; }
+  p.body { font-size:14px; color:var(--ink-soft); margin:0 0 12px; }
+  p.body b { color:var(--ink); font-weight:600; }
+  .prob { background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--warn);
+    border-radius:10px; padding:12px 14px; font-size:13.5px; color:var(--ink-soft); }
+  .prob b { color:var(--ink); }
+
+  /* ---- FLOW ---- */
+  .flow-wrap { background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    padding:16px 16px 14px; box-shadow:var(--shadow); overflow-x:auto; }
+  figure { margin:0; }
+  figcaption { font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-faint);
+    margin-top:10px; line-height:1.5; }
+  figcaption b { color:var(--ink-soft); font-weight:600; }
+  svg.flow { width:100%; min-width:660px; height:auto; display:block; color:var(--ink); }
+
+  /* exec read chips */
+  .read { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .chip { background:var(--surface); border:1px solid var(--line); border-radius:11px;
+    padding:11px 13px; box-shadow:var(--shadow); }
+  .chip .n { font-weight:600; font-size:13.5px; letter-spacing:-.005em; }
+  .chip .d { font-size:12px; color:var(--ink-soft); margin-top:2px; line-height:1.35; }
+  .chip .num { font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--accent-ink);
+    font-weight:600; margin-right:6px; }
+
+  .out { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  .oc { background:var(--surface-2); border:1px solid var(--line-soft); border-radius:11px; padding:12px 13px; }
+  .oc .t { font-weight:700; font-size:13.5px; margin-bottom:3px; }
+  .oc .t .b { color:var(--accent-ink); }
+  .oc .s { font-size:12px; color:var(--ink-soft); line-height:1.4; }
+
+  /* ---- build flow (how the ontology is built) ---- */
+  .build-scroll { overflow-x:auto; padding-bottom:4px; }
+  .build { display:flex; align-items:stretch; gap:0; min-width:820px; }
+  .step { flex:1; background:var(--surface); border:1px solid var(--line); border-radius:11px;
+    padding:10px 12px; box-shadow:var(--shadow); border-top:3px solid var(--line); }
+  .step.built { border-top-color:var(--dbx); }
+  .step.disc  { border-top-color:var(--accent); }
+  .step.final { background:var(--accent-soft); border:1.5px solid var(--accent); border-top:1.5px solid var(--accent); }
+  .step .k { font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:600;
+    letter-spacing:.08em; color:var(--ink-faint); }
+  .step.built .k { color:var(--dbx-ink); } .step.disc .k, .step.final .k { color:var(--accent-ink); }
+  .step .n { font-weight:700; font-size:14px; letter-spacing:-.01em; margin-top:2px;
+    font-family:"Fraunces",serif; }
+  .step .d { font-size:11.5px; color:var(--ink-soft); line-height:1.32; margin-top:3px; }
+  .barrow { display:flex; align-items:center; justify-content:center; padding:0 7px; flex:none; color:var(--ink-faint); }
+  .barrow svg { width:20px; height:20px; }
+  .barrow.acc { color:var(--accent); }
+  a.step { text-decoration:none; color:inherit; display:flex; flex-direction:column; transition:border-color .12s ease; }
+  a.step:hover { border-color:var(--accent); }
+  a.step:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+  /* ---- docs / run order links ---- */
+  .docs { display:flex; flex-wrap:wrap; gap:10px; }
+  a.doc { text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+    background:var(--surface); border:1px solid var(--line); border-radius:10px;
+    padding:9px 13px; box-shadow:var(--shadow); color:var(--ink); font-size:13px; font-weight:600;
+    transition:border-color .12s ease; }
+  a.doc:hover { border-color:var(--accent); }
+  a.doc:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  a.doc .arr { color:var(--accent-ink); font-family:"IBM Plex Mono",monospace; font-weight:600; }
+  a.doc .sub { color:var(--ink-faint); font-weight:400; font-family:"IBM Plex Mono",monospace; font-size:11px; }
+
+  footer { margin-top:24px; padding-top:14px; border-top:1px solid var(--line);
+    font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--ink-faint); line-height:1.6; }
+
+  @media (max-width:820px){ .head,.two{grid-template-columns:1fr;} .out{grid-template-columns:1fr 1fr;} }
+
+  @media print {
+    @page { size: A4 landscape; margin: 11mm; }
+    body { background:#fff; }
+    .page { max-width:none; padding:0; }
+    .kpi,.chip,.flow-wrap,.oc,.step,.doc { box-shadow:none; }
+    /* multi-page friendly: keep each block whole, break between sections as needed */
+    section { margin-top:16px; break-inside:avoid; }
+    .head { break-inside:avoid; }
+    .flow-wrap,.build,.step,.chip,.oc,.kpi,.doc,figure { break-inside:avoid; }
+    .sec-h { break-after:avoid; }
+    a[href]::after { content:""; }  /* don't append raw URLs when printing */
+  }
+</style>
+
+<div class="page">
+
+  <header class="head">
+    <div>
+      <p class="eyebrow"><span class="rule"></span> Executive Use Case · AXA Insurance</p>
+      <h1>Governed loss-ratio intelligence</h1>
+      <p class="lede">Let an executive ask, in plain language, <b>which parts of the book are underperforming
+        on loss ratio</b> — and get the <b>one governed number</b> behind it in seconds, not weeks. Built on the
+        Databricks lakehouse the business already runs, so people and AI agents share the same truth.</p>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="v good">64.6%</div><div class="l">Portfolio loss ratio</div></div>
+      <div class="kpi"><div class="v accent">91.8%</div><div class="l">Combined ratio</div></div>
+      <div class="kpi"><div class="v">Seconds</div><div class="l">Not weeks — self-serve</div></div>
+      <div class="kpi"><div class="v">1</div><div class="l">Definition, governed &amp; certified</div></div>
+    </div>
+  </header>
+
+  <!-- USE CASE + FLOW -->
+  <section>
+    <div class="two">
+      <div>
+        <p class="sec-h">The use case</p>
+        <h2>One question. One number. Trusted.</h2>
+        <p class="body"><b>As a</b> Chief Underwriting Officer / COO, <b>I want to</b> ask which lines of business
+          are running hot on loss ratio this quarter and see the approved definition behind it — <b>so that I</b>
+          can direct underwriting, pricing and reserving action with confidence.</p>
+        <div class="prob"><b>Today:</b> the number arrives in a slide three weeks late, and "loss ratio" means
+          something different in every deck — paid vs incurred, gross vs net, written vs earned premium. The
+          decision waits on an analyst, and nobody is sure whose definition is on screen.</div>
+      </div>
+      <div>
+        <p class="sec-h">The flow — data to decision</p>
+        <div class="flow-wrap">
+          <figure>
+            <svg class="flow" viewBox="0 0 720 300" role="img"
+              aria-label="Flow: source systems ingest into the lakehouse, modeled once into a governed semantic layer, asked in natural language through Genie One, returning a governed loss-ratio answer to the executive; the same governed layer also feeds Power BI and agents.">
+              <defs>
+                <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+                </marker>
+                <marker id="arA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+                </marker>
+              </defs>
+
+              <!-- nodes: y row at 60, height 62 -->
+              <!-- 1 Sources -->
+              <rect x="4" y="60" width="120" height="64" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+              <text x="64" y="86" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink)">Loss run &amp;</text>
+              <text x="64" y="102" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink)">policy systems</text>
+              <text x="64" y="117" text-anchor="middle" font-size="9.5" fill="var(--ink-faint)" font-family="IBM Plex Mono, monospace">claims · premiums</text>
+
+              <!-- 2 Lakehouse (dbx) -->
+              <rect x="152" y="58" width="128" height="68" rx="10" fill="var(--dbx-soft)" stroke="var(--dbx)" stroke-width="1.4"/>
+              <text x="216" y="84" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink)">Lakehouse</text>
+              <text x="216" y="100" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">Delta · Unity Catalog</text>
+              <text x="216" y="116" text-anchor="middle" font-size="9.5" fill="var(--dbx-ink)" font-family="IBM Plex Mono, monospace">medallion · certified</text>
+
+              <!-- 3 Semantic layer (accent) -->
+              <rect x="308" y="56" width="150" height="72" rx="10" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"/>
+              <text x="383" y="80" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink)">Governed semantics</text>
+              <text x="383" y="96" text-anchor="middle" font-size="10" fill="var(--ink-soft)">Metric Views · Glossary</text>
+              <text x="383" y="110" text-anchor="middle" font-size="10" fill="var(--ink-soft)">Genie Ontology</text>
+              <text x="383" y="123" text-anchor="middle" font-size="9" fill="var(--accent-ink)" font-family="IBM Plex Mono, monospace">loss ratio defined ONCE</text>
+
+              <!-- 4 Genie One (accent) -->
+              <rect x="486" y="58" width="118" height="68" rx="10" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"/>
+              <text x="545" y="86" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink)">Genie One</text>
+              <text x="545" y="102" text-anchor="middle" font-size="10" fill="var(--ink-soft)">ask in plain</text>
+              <text x="545" y="115" text-anchor="middle" font-size="10" fill="var(--ink-soft)">language</text>
+
+              <!-- 5 Executive -->
+              <rect x="632" y="60" width="84" height="64" rx="10" fill="var(--surface-2)" stroke="var(--line)"/>
+              <text x="674" y="88" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink)">Exec</text>
+              <text x="674" y="104" text-anchor="middle" font-size="9.5" fill="var(--ink-faint)" font-family="IBM Plex Mono, monospace">decision</text>
+
+              <!-- arrows between nodes (row y=92) -->
+              <g stroke="currentColor" stroke-width="1.6" fill="none" opacity="0.85">
+                <line x1="126" y1="92" x2="150" y2="92" marker-end="url(#ar)"/>
+                <line x1="282" y1="92" x2="306" y2="92" marker-end="url(#ar)"/>
+              </g>
+              <g stroke="var(--accent)" stroke-width="1.8" fill="none">
+                <line x1="460" y1="92" x2="484" y2="92" marker-end="url(#arA)"/>
+                <line x1="606" y1="92" x2="630" y2="92" marker-end="url(#arA)"/>
+              </g>
+              <!-- arrow labels -->
+              <g font-family="IBM Plex Mono, monospace" font-size="8.5" fill="var(--ink-faint)" text-anchor="middle">
+                <text x="138" y="80">ingest</text>
+                <text x="294" y="80">model</text>
+                <text x="472" y="80" fill="var(--accent-ink)">ask</text>
+                <text x="618" y="80" fill="var(--accent-ink)">answer</text>
+              </g>
+
+              <!-- governance band under nodes 2-4 -->
+              <rect x="152" y="150" width="452" height="34" rx="8" fill="none" stroke="var(--accent)" stroke-dasharray="4 3" opacity="0.8"/>
+              <text x="378" y="171" text-anchor="middle" font-size="11" font-weight="600" fill="var(--accent-ink)">Unity Catalog — one definition · certified · row/column governed · fully audited</text>
+              <!-- ticks up to the three governed nodes -->
+              <g stroke="var(--accent)" stroke-width="1" opacity="0.55">
+                <line x1="216" y1="150" x2="216" y2="126"/>
+                <line x1="383" y1="150" x2="383" y2="128"/>
+                <line x1="545" y1="150" x2="545" y2="126"/>
+              </g>
+
+              <!-- fan-out: same governed layer -> BI & agents -->
+              <line x1="383" y1="184" x2="383" y2="214" stroke="var(--ink-faint)" stroke-width="1.4" fill="none" marker-end="url(#ar)" opacity="0.8"/>
+              <rect x="250" y="216" width="266" height="40" rx="9" fill="var(--surface-2)" stroke="var(--line)"/>
+              <text x="383" y="234" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)">Same layer → Power BI · dashboards · AI agents</text>
+              <text x="383" y="249" text-anchor="middle" font-size="9.5" fill="var(--ink-faint)" font-family="IBM Plex Mono, monospace">no re-derivation, no drifting spreadsheet</text>
+            </svg>
+            <figcaption><b>The question routes through the governed layer.</b> Loss ratio is defined once
+              (incurred ÷ earned) as a metric view; Genie answers off that definition, and the very same layer
+              feeds BI and agents — so every consumer returns the same, certified number.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW THE ONTOLOGY IS BUILT -->
+  <section>
+    <p class="sec-h">How the ontology is built</p>
+    <div class="build-scroll">
+      <div class="build">
+        <a class="step built" href="https://github.com/saswata30/axa-insurance-domain-workshop/blob/main/notebooks/01_Gold_Layer_Tables.py">
+          <span class="k">01 · GOLD LAYER</span><span class="n">Gold Layer</span>
+          <span class="d">Certify the P&amp;C tables — business descriptions, declared keys, trusted.</span></a>
+        <span class="barrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span>
+        <a class="step built" href="https://github.com/saswata30/axa-insurance-domain-workshop/blob/main/notebooks/02_Metric_Views.py">
+          <span class="k">02 · METRIC VIEWS</span><span class="n">Metric Views</span>
+          <span class="d">Define loss ratio &amp; combined ratio <b>once</b>, as governed code.</span></a>
+        <span class="barrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span>
+        <a class="step built" href="https://github.com/saswata30/axa-insurance-domain-workshop/blob/main/notebooks/03_Genie_Agent.py">
+          <span class="k">03 · GENIE AGENT</span><span class="n">Genie Agent</span>
+          <span class="d">A conversational agent on the tables + metric views.</span></a>
+        <span class="barrow acc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span>
+        <a class="step disc" href="https://github.com/saswata30/axa-insurance-domain-workshop/blob/main/notebooks/04_Insurance_Domain_and_Glossary.py">
+          <span class="k">04 · DOMAIN + GLOSSARY</span><span class="n">Domain &amp; Glossary</span>
+          <span class="d">Business terms as pages; every asset tagged into the Insurance domain.</span></a>
+        <span class="barrow acc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span>
+        <a class="step final" href="https://github.com/saswata30/axa-insurance-domain-workshop#readme">
+          <span class="k">RESULT</span><span class="n">Genie Ontology</span>
+          <span class="d">The governed context graph — Unity Catalog semantics + auto-learned knowledge.</span></a>
+      </div>
+    </div>
+    <figcaption style="margin-top:10px"><b>Built bottom-up</b> on the lakehouse (notebooks 01→03), then
+      <b>discovered top-down</b> at the domain (04). Metric Views + Glossary + Domain <b>are</b> the Unity Catalog
+      semantics; combined with auto-learned knowledge they form the <b>Genie Ontology</b> — the one governed
+      meaning that both the Genie Agent and business users reason over.</figcaption>
+  </section>
+
+  <!-- DOCUMENTATION & RUN ORDER -->
+  <section>
+    <p class="sec-h">Documentation &amp; steps</p>
+    <div class="docs">
+      <a class="doc" href="https://github.com/saswata30/axa-insurance-domain-workshop#readme">Workshop repo &amp; README <span class="arr">↗</span></a>
+      <a class="doc" href="https://github.com/saswata30/axa-insurance-domain-workshop/blob/main/scripts/generate_synthetic_data.py">Step 0 — Generate data <span class="sub">scripts/generate_synthetic_data.py</span> <span class="arr">↗</span></a>
+      <a class="doc" href="https://github.com/saswata30/axa-insurance-domain-workshop/tree/main/notebooks">Steps 01–04 — Notebooks <span class="arr">↗</span></a>
+      <a class="doc" href="https://github.com/saswata30/axa-insurance-domain-workshop/blob/main/docs/stories/loss-ratio-exec.md">Exec story — loss ratio <span class="arr">↗</span></a>
+    </div>
+  </section>
+
+  <!-- WHAT THE EXEC WATCHES -->
+  <section>
+    <p class="sec-h">What the executive should be looking at</p>
+    <div class="read">
+      <div class="chip"><div class="n"><span class="num">1</span>Level, target &amp; trend</div><div class="d">Loss ratio vs. target and prior year — a point value means nothing without a bar and a trend.</div></div>
+      <div class="chip"><div class="n"><span class="num">2</span>Which segment drives it</div><div class="d">Portfolio 64.6% can hide a line of business at 90%+. Act on the segment, not the average.</div></div>
+      <div class="chip"><div class="n"><span class="num">3</span>Frequency vs. severity</div><div class="d">More claims or bigger claims? Different fixes — terms &amp; risk selection vs. pricing &amp; cat exposure.</div></div>
+      <div class="chip"><div class="n"><span class="num">4</span>Combined ratio &amp; trust</div><div class="d">Underwriting profit is loss + expense (91.8%). And is the number from a certified, current asset?</div></div>
+    </div>
+  </section>
+
+  <!-- OUTCOMES -->
+  <section>
+    <p class="sec-h">Why it matters</p>
+    <div class="out">
+      <div class="oc"><div class="t"><span class="b">Faster</span> decisions</div><div class="s">Self-serve in seconds — the analyst backlog and the three-week slide disappear.</div></div>
+      <div class="oc"><div class="t"><span class="b">One</span> source of truth</div><div class="s">Loss ratio defined once; every deck, dashboard and agent agrees.</div></div>
+      <div class="oc"><div class="t"><span class="b">Trusted</span> &amp; auditable</div><div class="s">Certified assets, governed access, full lineage — safe for regulated reporting.</div></div>
+      <div class="oc"><div class="t"><span class="b">Scales</span> to AI</div><div class="s">Agents inherit the same governed meaning — no ungoverned model of the business.</div></div>
+    </div>
+  </section>
+
+  <footer>
+    AXA Insurance — Genie Ontology Workshop · governed semantic layer for the P&amp;L loss run.
+    Figures are the calibrated synthetic portfolio truth (seed 42): loss ratio 64.6% · combined ratio 91.8%.
+    Illustrative — for executive discussion.
+  </footer>
+
+</div>
