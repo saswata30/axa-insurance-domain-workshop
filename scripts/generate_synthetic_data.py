@@ -7,11 +7,13 @@ designed to teach the Genie semantic layer (loss run + loss-ratio metrics).
 Tier 1 (Polars/NumPy/Mimesis) -> Connect bridge to Unity Catalog.
 Seed = 42 (reproducible).
 
-Tables (catalog.schema = axa_workshop.insurance):
-  customers  ~1,200  commercial insureds (EMEA)
-  policies   ~5,000  annual policies, 4 lines of business, 2023-2025
-  claims     ~7,000  THE LOSS RUN — paid/reserve/incurred/recovery, open & closed
-  premiums   ~110k   monthly earned-premium schedule (time dimension for ratios)
+Tables (schema = insurance, created under the workspace DEFAULT catalog):
+  customers  ~1,200   commercial insureds (EMEA)
+  policies    5,000   annual policies, 4 lines of business, 2023-2025
+  claims      2,979   THE LOSS RUN — paid/reserve/incurred/recovery, open & closed
+  premiums   ~54,000  monthly earned-premium schedule (time dimension for ratios)
+
+Realized at seed=42: loss ratio 64.6% · expense ratio 27.2% · combined ratio 91.8%.
 
 Business logic baked in so the KPIs are real:
   loss_ratio      = incurred_loss / earned_premium
@@ -303,15 +305,12 @@ print("=" * 60)
 from databricks.connect import DatabricksSession
 spark = DatabricksSession.builder.serverless().getOrCreate()
 
-CATALOG = "axa_workshop"
+# Create the schema under the workspace DEFAULT catalog and write there.
+# (No catalog creation — we use whatever catalog the workspace defaults to.)
+CATALOG = spark.sql("SELECT current_catalog()").collect()[0][0]
 SCHEMA = "insurance"
-try:
-    spark.sql(f"CREATE CATALOG IF NOT EXISTS {CATALOG}")
-    print(f"catalog ready: {CATALOG}")
-except Exception as e:
-    print(f"[warn] could not create catalog {CATALOG}: {e}\n  -> falling back")
-    CATALOG = "serverless_stable_xhky6g_catalog"
 spark.sql(f"CREATE SCHEMA IF NOT EXISTS {CATALOG}.{SCHEMA}")
+print(f"default catalog: {CATALOG}  ->  schema {CATALOG}.{SCHEMA}")
 
 def write(df, name):
     (spark.createDataFrame(df.to_pandas())
