@@ -47,17 +47,18 @@ Polars / NumPy / Mimesis generator that writes to Unity Catalog via Databricks C
 | Table | Rows | Grain |
 |-------|------|-------|
 | `customers` | ~1,200 | commercial insureds (EMEA) |
-| `policies`  | ~5,000 | annual policies · Property / Motor / Liability / Marine · UW years 2023–2025 |
-| `claims`    | ~7,000 | **the loss run** — paid / reserve / incurred / recovery, open & closed |
-| `premiums`  | ~110k  | monthly earned-premium schedule (time dimension for ratios) |
+| `policies`  | 5,000  | annual policies · Property / Motor / Liability / Marine · UW years 2023–2025 |
+| `claims`    | 2,979  | **the loss run** — paid / reserve / incurred / recovery, open & closed |
+| `premiums`  | ~54,000 | monthly earned-premium schedule (time dimension for ratios) |
 
 Loss levels are **calibrated per line of business** (target loss ratios — Property 61%, Motor 72%,
-Liability 69%, Marine 58%) while preserving heavy tails and large losses. The script prints the realized
-loss, expense, and combined ratios at the end of every run.
+Liability 69%, Marine 58%) while preserving heavy tails and large losses. Realized portfolio truth at
+seed 42: **loss ratio ≈ 64.6%**, **expense ratio ≈ 27.2%**, **combined ratio ≈ 91.8%** (the script prints
+these at the end of every run).
 
-**Catalog:** writes to `axa_workshop.insurance` (falls back to `serverless_stable_xhky6g_catalog.insurance`
-if the catalog can’t be created). The notebooks read `serverless_stable_xhky6g_catalog.insurance` — point
-them at whichever catalog the generator populated.
+**Catalog:** the generator creates the `insurance` schema **under the workspace default catalog** and writes
+there — no named-catalog creation. In this workspace the default catalog is `serverless_stable_xhky6g_catalog`,
+which is exactly what the notebooks read, so it runs end-to-end with no edits.
 
 ## Notes on the feature (as of Sept 2026)
 
