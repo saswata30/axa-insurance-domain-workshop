@@ -301,9 +301,18 @@ print(f"Expense ratio  : {tot_exp / policies['written_premium'].sum():>8.1%}")
 print(f"Combined ratio : {tot_incurred / tot_earned + tot_exp / policies['written_premium'].sum():>8.1%}")
 print("=" * 60)
 
-# ---- Connect bridge to Unity Catalog ----
-from databricks.connect import DatabricksSession
-spark = DatabricksSession.builder.serverless().getOrCreate()
+# ---- Spark session --------------------------------------------------------
+# Reuse the active session when running inside a Databricks notebook/job;
+# fall back to Databricks Connect (serverless) when running externally.
+try:
+    spark  # provided by the Databricks runtime (notebook / job)
+except NameError:
+    try:
+        from databricks.connect import DatabricksSession
+        spark = DatabricksSession.builder.serverless().getOrCreate()
+    except Exception:
+        from pyspark.sql import SparkSession
+        spark = SparkSession.builder.getOrCreate()
 
 # Create the schema under the workspace DEFAULT catalog and write there.
 # (No catalog creation — we use whatever catalog the workspace defaults to.)
