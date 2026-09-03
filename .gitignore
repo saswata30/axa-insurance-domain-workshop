@@ -1,0 +1,36 @@
+# macOS
+.DS_Store
+.AppleDouble
+Icon?
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*~
+
+# Secrets / local config (never commit)
+.env
+.env.*
+*.pem
+*.key
+.databrickscfg
+
+# Build / scratch artifacts
+/tmp/
+*.log
+node_modules/
+dist/
+build/
+
+# Deck build scratch (regenerated from deck.template.html + screenshots)
+deck_preview_*.png
