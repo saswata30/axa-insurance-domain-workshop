@@ -21,6 +21,7 @@ Built bottom-up in the notebooks; discovered top-down at the domain.
 
 | # | Notebook | What it does |
 |---|----------|--------------|
+| 0 | `scripts/generate_synthetic_data.py` | **Generate** the synthetic P&C book — customers, policies, the **claims loss run**, monthly premiums — into Unity Catalog (Databricks Connect · serverless · seed 42). **Run first.** |
 | 00 | `notebooks/00_README_Agenda.py` | Business-user journey + agenda |
 | 01 | `notebooks/01_Gold_Layer_Tables.py` | **Certify** the P&C tables as trusted gold assets (descriptions, keys, certification) — *runnable SQL* |
 | 02 | `notebooks/02_Metric_Views.py` | Define the KPIs **once** — loss ratio, combined ratio, frequency, severity — as governed metric views — *runnable SQL* |
@@ -40,8 +41,23 @@ create domain → tag assets → bulk-import glossary → published domain with 
 
 ## The dataset & KPIs
 
-Runs against `serverless_stable_xhky6g_catalog.insurance` (`customers`, `policies`, `claims`, `premiums`).
-Calibrated portfolio truth: **loss ratio ≈ 64.6%**, **combined ratio ≈ 91.8%** (5,000 policies, 2,979 claims).
+The four tables are produced by **`scripts/generate_synthetic_data.py`** — a deterministic (seed 42)
+Polars / NumPy / Mimesis generator that writes to Unity Catalog via Databricks Connect (serverless):
+
+| Table | Rows | Grain |
+|-------|------|-------|
+| `customers` | ~1,200 | commercial insureds (EMEA) |
+| `policies`  | ~5,000 | annual policies · Property / Motor / Liability / Marine · UW years 2023–2025 |
+| `claims`    | ~7,000 | **the loss run** — paid / reserve / incurred / recovery, open & closed |
+| `premiums`  | ~110k  | monthly earned-premium schedule (time dimension for ratios) |
+
+Loss levels are **calibrated per line of business** (target loss ratios — Property 61%, Motor 72%,
+Liability 69%, Marine 58%) while preserving heavy tails and large losses. The script prints the realized
+loss, expense, and combined ratios at the end of every run.
+
+**Catalog:** writes to `axa_workshop.insurance` (falls back to `serverless_stable_xhky6g_catalog.insurance`
+if the catalog can’t be created). The notebooks read `serverless_stable_xhky6g_catalog.insurance` — point
+them at whichever catalog the generator populated.
 
 ## Notes on the feature (as of Sept 2026)
 
