@@ -23,7 +23,7 @@
 
 # COMMAND ----------
 
-CATALOG = "serverless_stable_xhky6g_catalog"
+CATALOG = spark.sql("SELECT current_catalog()").collect()[0][0]  # workspace default catalog
 SCHEMA  = "insurance"
 spark.sql(f"USE CATALOG {CATALOG}")
 spark.sql(f"USE SCHEMA {SCHEMA}")
@@ -52,12 +52,12 @@ spark.sql(f"USE SCHEMA {SCHEMA}")
 # MAGIC          COALESCE(c.case_reserve,0)    AS case_reserve,
 # MAGIC          COALESCE(c.recovery_amount,0) AS recovery_amount,
 # MAGIC          COALESCE(c.claim_count,0)     AS claim_count
-# MAGIC   FROM serverless_stable_xhky6g_catalog.insurance.policies p
+# MAGIC   FROM insurance.policies p
 # MAGIC   LEFT JOIN (
 # MAGIC      SELECT policy_id, SUM(incurred_loss) incurred_loss, SUM(paid_loss) paid_loss,
 # MAGIC             SUM(case_reserve) case_reserve, SUM(recovery_amount) recovery_amount,
 # MAGIC             COUNT(*) claim_count
-# MAGIC      FROM serverless_stable_xhky6g_catalog.insurance.claims GROUP BY policy_id
+# MAGIC      FROM insurance.claims GROUP BY policy_id
 # MAGIC   ) c ON p.policy_id = c.policy_id
 # MAGIC dimensions:
 # MAGIC   - name: Line of Business
@@ -107,7 +107,7 @@ spark.sql(f"USE SCHEMA {SCHEMA}")
 # MAGIC COMMENT 'Claim-level (loss run) metrics: incurred, paid, reserves, recovery, frequency and severity by cause of loss.'
 # MAGIC AS $$
 # MAGIC version: 0.1
-# MAGIC source: serverless_stable_xhky6g_catalog.insurance.claims
+# MAGIC source: insurance.claims
 # MAGIC dimensions:
 # MAGIC   - name: Line of Business
 # MAGIC     expr: line_of_business
