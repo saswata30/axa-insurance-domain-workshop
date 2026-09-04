@@ -17,7 +17,7 @@
 
 # COMMAND ----------
 
-CATALOG = "serverless_stable_xhky6g_catalog"
+CATALOG = spark.sql("SELECT current_catalog()").collect()[0][0]  # workspace default catalog
 SCHEMA  = "insurance"
 spark.sql(f"USE CATALOG {CATALOG}")
 spark.sql(f"USE SCHEMA {SCHEMA}")
